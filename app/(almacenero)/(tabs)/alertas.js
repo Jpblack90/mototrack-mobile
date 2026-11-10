@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useTheme } from '../../../src/theme';
 import useStockAlerts from '../../../src/hooks/useStockAlerts';
 import Badge from '../../../src/components/ui/Badge';
@@ -23,6 +23,12 @@ export default function AlmaceneroAlertsScreen() {
 
   const { outOfStock, lowStock, total, loading, error, refresh } =
     useStockAlerts();
+
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);

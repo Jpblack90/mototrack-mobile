@@ -33,7 +33,13 @@
           "imageWidth": 76
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "MotoTrack usa la cámara para identificar repuestos con IA."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

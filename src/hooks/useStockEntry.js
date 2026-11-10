@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import client from '../api/client';
+import { emitStockAlertsUpdated } from './useStockAlerts';
 
 /**
  * Hook para registrar una entrada de stock de mercadería.
@@ -17,6 +18,7 @@ export default function useStockEntry() {
         quantity: Number(quantity),
         note: note ? String(note).trim() : undefined,
       });
+      emitStockAlertsUpdated();
       return { success: true, data: res.data?.data };
     } catch (err) {
       const msg =

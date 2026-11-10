@@ -22,6 +22,7 @@ import useStockEntry from '../../../src/hooks/useStockEntry';
 import Button from '../../../src/components/ui/Button';
 import Badge from '../../../src/components/ui/Badge';
 import ConfirmDialog from '../../../src/components/ui/ConfirmDialog';
+import SuccessDialog from '../../../src/components/ui/SuccessDialog';
 
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -41,6 +42,10 @@ export default function ProductDetailScreen() {
 
   // Estado para el ConfirmDialog
   const [confirmVisible, setConfirmVisible] = useState(false);
+
+  // Estado para el SuccessDialog
+  const [successVisible, setSuccessVisible] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const stock = Number(product?.stock ?? 0);
   const minStock = Number(product?.min_stock ?? 0);
@@ -118,10 +123,10 @@ export default function ProductDetailScreen() {
     setModalVisible(false);
     await refresh();
 
-    Alert.alert(
-      'Entrada registrada con éxito',
+    setSuccessMessage(
       `Se sumaron ${quantity} unidades a "${product.name}".\nNuevo stock disponible: ${res.data?.stock}.`
     );
+    setSuccessVisible(true);
   };
 
   if (loading && !product) {
@@ -747,6 +752,15 @@ export default function ProductDetailScreen() {
         loading={submitting}
         onCancel={() => setConfirmVisible(false)}
         onConfirm={handleConfirmStockEntry}
+      />
+
+      {/* SuccessDialog con diseño accesible */}
+      <SuccessDialog
+        visible={successVisible}
+        title="Entrada registrada con éxito"
+        message={successMessage}
+        buttonText="Aceptar"
+        onClose={() => setSuccessVisible(false)}
       />
     </KeyboardAvoidingView>
   );

@@ -1,6 +1,21 @@
 import { useState, useEffect, useCallback } from 'react';
 import client from '../api/client';
 
+const alertListeners = new Set();
+
+/**
+ * Notifica a todos los componentes que escuchan alertas de stock para que refresquen su conteo.
+ */
+export function emitStockAlertsUpdated() {
+  for (const listener of alertListeners) {
+    try {
+      listener();
+    } catch {
+      // Ignorar errores de callback en componentes desmontándose
+    }
+  }
+}
+
 /**
  * Hook para consultar las alertas de inventario (agotados y stock bajo).
  * GET /api/inventory/alerts
@@ -51,10 +66,16 @@ export default function useStockAlerts() {
         }
       });
 
+    const onUpdate = () => {
+      fetchAlerts();
+    };
+
+    alertListeners.add(onUpdate);
     return () => {
       isMounted = false;
+      alertListeners.delete(onUpdate);
     };
-  }, []);
+  }, [fetchAlerts]);
 
   return {
     data,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,10 @@ import {
   RefreshControl,
   TextInput,
   TouchableOpacity,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useTheme } from '../../../src/theme';
 import useInventory, {
   STOCK_STATUS_FILTERS,
@@ -27,11 +28,18 @@ export default function AlmaceneroInventoryScreen() {
     STOCK_STATUS_FILTERS.ALL
   );
   const [refreshing, setRefreshing] = useState(false);
+  const [optionsVisible, setOptionsVisible] = useState(false);
 
   const { data, loading, error, refresh } = useInventory({
     search: searchText,
     stockStatus: selectedStatus,
   });
+
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -376,6 +384,190 @@ export default function AlmaceneroInventoryScreen() {
           }
         />
       )}
+
+      {/* Botón flotante (FAB) rojo de 56 px */}
+      <TouchableOpacity
+        onPress={() => setOptionsVisible(true)}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel="Agregar nuevo repuesto"
+        style={[
+          styles.fab,
+          {
+            backgroundColor: colors.primary,
+          },
+        ]}
+      >
+        <Ionicons name="add" size={32} color={colors.primaryForeground} />
+      </TouchableOpacity>
+
+      {/* Hoja modal de opciones: Escanear con IA / Registrar manualmente */}
+      <Modal
+        visible={optionsVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setOptionsVisible(false)}
+      >
+        <Pressable
+          style={styles.modalBackdrop}
+          onPress={() => setOptionsVisible(false)}
+        >
+          <Pressable
+            style={[
+              styles.optionsSheet,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                borderTopLeftRadius: radius.lg,
+                borderTopRightRadius: radius.lg,
+                padding: spacing.lg,
+              },
+            ]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.sheetHandle} />
+
+            <Text
+              style={[
+                styles.optionsTitle,
+                { color: colors.foreground, fontSize: fontSize.lg },
+              ]}
+            >
+              Agregar repuesto
+            </Text>
+            <Text
+              style={[
+                styles.optionsSubtitle,
+                {
+                  color: colors.mutedForeground,
+                  fontSize: fontSize.xs,
+                  marginTop: 2,
+                  marginBottom: spacing.md,
+                },
+              ]}
+            >
+              Selecciona cómo deseas ingresar el repuesto al inventario
+            </Text>
+
+            {/* Opción 1: Escanear con IA */}
+            <TouchableOpacity
+              onPress={() => {
+                setOptionsVisible(false);
+                router.push('/(almacenero)/producto/escanear');
+              }}
+              style={[
+                styles.optionRow,
+                {
+                  backgroundColor: 'rgba(197, 2, 32, 0.06)',
+                  borderColor: colors.primary,
+                  borderRadius: radius.md,
+                  padding: spacing.md,
+                  marginBottom: spacing.sm,
+                },
+              ]}
+              activeOpacity={0.7}
+            >
+              <View
+                style={[
+                  styles.optionIconBox,
+                  { backgroundColor: colors.primary, borderRadius: radius.full },
+                ]}
+              >
+                <Ionicons
+                  name="sparkles"
+                  size={20}
+                  color={colors.primaryForeground}
+                />
+              </View>
+              <View style={styles.optionTextContainer}>
+                <Text
+                  style={[
+                    styles.optionLabel,
+                    { color: colors.foreground, fontSize: fontSize.md },
+                  ]}
+                >
+                  Escanear con IA
+                </Text>
+                <Text
+                  style={[
+                    styles.optionSublabel,
+                    { color: colors.mutedForeground, fontSize: fontSize.xs },
+                  ]}
+                >
+                  Identifica marca, modelo y categoría desde una foto
+                </Text>
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={colors.mutedForeground}
+              />
+            </TouchableOpacity>
+
+            {/* Opción 2: Registrar manualmente */}
+            <TouchableOpacity
+              onPress={() => {
+                setOptionsVisible(false);
+                router.push('/(almacenero)/producto/nuevo');
+              }}
+              style={[
+                styles.optionRow,
+                {
+                  backgroundColor: colors.muted,
+                  borderColor: colors.border,
+                  borderRadius: radius.md,
+                  padding: spacing.md,
+                  marginBottom: spacing.lg,
+                },
+              ]}
+              activeOpacity={0.7}
+            >
+              <View
+                style={[
+                  styles.optionIconBox,
+                  { backgroundColor: colors.border, borderRadius: radius.full },
+                ]}
+              >
+                <Ionicons
+                  name="create-outline"
+                  size={20}
+                  color={colors.foreground}
+                />
+              </View>
+              <View style={styles.optionTextContainer}>
+                <Text
+                  style={[
+                    styles.optionLabel,
+                    { color: colors.foreground, fontSize: fontSize.md },
+                  ]}
+                >
+                  Registrar manualmente
+                </Text>
+                <Text
+                  style={[
+                    styles.optionSublabel,
+                    { color: colors.mutedForeground, fontSize: fontSize.xs },
+                  ]}
+                >
+                  Ingresa todos los campos en el formulario tradicional
+                </Text>
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={colors.mutedForeground}
+              />
+            </TouchableOpacity>
+
+            <Button
+              title="Cancelar"
+              variant="outline"
+              onPress={() => setOptionsVisible(false)}
+              style={styles.cancelBtn}
+            />
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -475,4 +667,72 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   skeletonBox: {},
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    zIndex: 99,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  optionsSheet: {
+    borderTopWidth: 1,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+  },
+  sheetHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#71717a50',
+    alignSelf: 'center',
+    marginBottom: 12,
+  },
+  optionsTitle: {
+    fontWeight: '700',
+  },
+  optionsSubtitle: {},
+  optionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    minHeight: 56,
+  },
+  optionIconBox: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  optionTextContainer: {
+    flex: 1,
+    marginRight: 8,
+  },
+  optionLabel: {
+    fontWeight: '700',
+  },
+  optionSublabel: {
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  cancelBtn: {
+    minHeight: 48,
+  },
 });

@@ -359,7 +359,10 @@ export default function AlmaceneroInventoryScreen() {
           data={data}
           keyExtractor={(item) => String(item.id)}
           renderItem={renderProductItem}
-          contentContainerStyle={[styles.listContent, { paddingBottom: 110 }]}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: 110 + 56 + 24 }, // 190 px para evitar que el FAB tape la última tarjeta
+          ]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl

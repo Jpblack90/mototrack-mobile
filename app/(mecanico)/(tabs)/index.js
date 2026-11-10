@@ -1,32 +1,72 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  Pressable,
   RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useTheme } from '../../../src/theme';
 import useMyWorkOrders, {
   WORK_ORDER_FILTERS,
 } from '../../../src/hooks/useMyWorkOrders';
-import Badge from '../../../src/components/ui/Badge';
 import Button from '../../../src/components/ui/Button';
 import EmptyState from '../../../src/components/ui/EmptyState';
 import { formatRelativeTime } from '../../../src/utils/dates';
 
-const STATUS_CONFIG = {
-  recibido: { label: 'Recibido', variant: 'outline' },
-  diagnostico: { label: 'Diagnóstico', variant: 'outline' },
-  pendiente_aprobacion: { label: 'Pend. Aprobación', variant: 'warning' },
-  en_reparacion: { label: 'En Reparación', variant: 'default' },
-  terminado: { label: 'Terminado', variant: 'success' },
-  entregado: { label: 'Entregado', variant: 'success' },
-  no_recogido: { label: 'No Recogido', variant: 'destructive' },
-};
+/**
+ * Mapeo de estado técnico a token de color de src/theme.js
+ * recibido = mutedForeground · diagnostico = warning · en_reparacion = primary ·
+ * pendiente_aprobacion = destructive · terminado/entregado = success · no_recogido = destructive.
+ */
+function getStatusTheme(status, colors) {
+  switch (status) {
+    case 'recibido':
+      return {
+        color: colors.mutedForeground,
+        label: 'Recibido',
+      };
+    case 'diagnostico':
+      return {
+        color: colors.warning,
+        label: 'Diagnóstico',
+      };
+    case 'en_reparacion':
+      return {
+        color: colors.primary,
+        label: 'En Reparación',
+      };
+    case 'pendiente_aprobacion':
+      return {
+        color: colors.destructive,
+        label: 'Pend. Aprobación',
+      };
+    case 'terminado':
+      return {
+        color: colors.success,
+        label: 'Terminado',
+      };
+    case 'entregado':
+      return {
+        color: colors.success,
+        label: 'Entregado',
+      };
+    case 'no_recogido':
+      return {
+        color: colors.destructive,
+        label: 'No Recogido',
+      };
+    default:
+      return {
+        color: colors.mutedForeground,
+        label: status,
+      };
+  }
+}
 
 export default function MecanicoOrdersScreen() {
   const router = useRouter();
@@ -36,7 +76,14 @@ export default function MecanicoOrdersScreen() {
   );
   const [refreshing, setRefreshing] = useState(false);
 
-  const { data, loading, error, refresh } = useMyWorkOrders(selectedFilter);
+  const { data, counts, loading, error, refresh } =
+    useMyWorkOrders(selectedFilter);
+
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -80,120 +127,200 @@ export default function MecanicoOrdersScreen() {
   };
 
   const renderOrderItem = ({ item }) => {
-    const statusMeta = STATUS_CONFIG[item.status] ?? {
-      label: item.status,
-      variant: 'outline',
-    };
-    const vehicleInfo = [item.brand, item.model].filter(Boolean).join(' ') || 'Vehículo sin registrar';
+    const statusTheme = getStatusTheme(item.status, colors);
+    const vehicleInfo =
+      [item.brand, item.model].filter(Boolean).join(' ') ||
+      'Vehículo sin registrar';
     const mileageText =
       item.entry_mileage != null
         ? `${Number(item.entry_mileage).toLocaleString('es-PE')} km`
         : '—';
     const relativeTime = formatRelativeTime(item.created_at);
 
+    // Si lleva más de 3 días en 'recibido', el tiempo se resalta en color warning
+    const isOldReceived = Boolean(item.is_old_received);
+    const timeColor = isOldReceived ? colors.warning : colors.mutedForeground;
+
     return (
-      <TouchableOpacity
+      <Pressable
         onPress={() =>
           router.push({
             pathname: '/(mecanico)/orden/[id]',
             params: { id: String(item.id) },
           })
         }
-        activeOpacity={0.7}
         accessibilityRole="button"
-        accessibilityLabel={`Orden ${item.id}, placa ${item.placa}`}
-        style={[
+        accessibilityLabel={`Orden ${item.id}, placa ${item.placa || 'sin placa'}`}
+        style={({ pressed }) => [
           styles.card,
           {
             backgroundColor: colors.card,
             borderColor: colors.border,
             borderRadius: radius.lg,
-            padding: spacing.md,
             marginBottom: spacing.md,
+            transform: [{ scale: pressed ? 0.98 : 1 }],
           },
         ]}
       >
-        {/* Cabecera de la tarjeta: Placa y Badge de estado */}
-        <View style={styles.cardHeader}>
-          <Text
-            style={[
-              styles.plateText,
-              {
-                color: colors.foreground,
-                fontSize: fontSize.xl,
-              },
-            ]}
-          >
-            {item.placa || `OT #${item.id}`}
-          </Text>
-          <Badge
-            label={statusMeta.label}
-            variant={statusMeta.variant}
-          />
-        </View>
-
-        {/* Marca y modelo */}
-        <Text
-          style={[
-            styles.vehicleText,
-            {
-              color: colors.foreground,
-              fontSize: fontSize.base,
-              marginTop: spacing.xs,
-            },
-          ]}
-        >
-          {vehicleInfo}
-        </Text>
-
-        {/* Separador sutil */}
+        {/* Franja vertical de 4 px a la izquierda con el color del estado */}
         <View
           style={[
-            styles.divider,
-            {
-              backgroundColor: colors.border,
-              marginVertical: spacing.sm,
-            },
+            styles.statusStripe,
+            { backgroundColor: statusTheme.color },
           ]}
         />
 
-        {/* Fila de metadatos: Kilometraje y Tiempo transcurrido */}
-        <View style={styles.cardFooter}>
-          <View style={styles.metaItem}>
-            <Ionicons
-              name="speedometer-outline"
-              size={16}
-              color={colors.mutedForeground}
-              style={styles.metaIcon}
-            />
-            <Text
+        <View style={[styles.cardContent, { padding: spacing.md }]}>
+          {/* Cabecera: OT #id pequeño y gris sobre la placa, y Badge relleno */}
+          <View style={styles.cardHeader}>
+            <View style={styles.headerLeft}>
+              <Text
+                style={[
+                  styles.orderNumber,
+                  { color: colors.mutedForeground, fontSize: fontSize.xs },
+                ]}
+              >
+                OT #{item.id}
+              </Text>
+              <Text
+                style={[
+                  styles.plateText,
+                  {
+                    color: colors.foreground,
+                    fontSize: fontSize.xl,
+                  },
+                ]}
+              >
+                {item.placa || 'SIN PLACA'}
+              </Text>
+            </View>
+
+            {/* Badge RELLENO */}
+            <View
               style={[
-                styles.metaText,
-                { color: colors.mutedForeground, fontSize: fontSize.xs },
+                styles.filledBadge,
+                {
+                  backgroundColor: statusTheme.color,
+                  borderRadius: radius.full,
+                },
               ]}
             >
-              {mileageText}
-            </Text>
+              <Text style={[styles.filledBadgeText, { fontSize: fontSize.xs }]}>
+                {statusTheme.label}
+              </Text>
+            </View>
           </View>
 
-          <View style={styles.metaItem}>
-            <Ionicons
-              name="time-outline"
-              size={16}
-              color={colors.mutedForeground}
-              style={styles.metaIcon}
-            />
+          {/* Marca y modelo */}
+          <Text
+            style={[
+              styles.vehicleText,
+              {
+                color: colors.foreground,
+                fontSize: fontSize.base,
+                marginTop: spacing.xs,
+              },
+            ]}
+          >
+            {vehicleInfo}
+          </Text>
+
+          {/* Nombre del cliente debajo de marca/modelo (nunca el teléfono) */}
+          {item.customer_name ? (
             <Text
               style={[
-                styles.metaText,
-                { color: colors.mutedForeground, fontSize: fontSize.xs },
+                styles.customerText,
+                {
+                  color: colors.mutedForeground,
+                  fontSize: fontSize.sm,
+                  marginTop: 2,
+                },
               ]}
             >
-              {relativeTime}
+              Cliente: {item.customer_name}
             </Text>
+          ) : null}
+
+          {/* Vista previa de diagnosis_notes en 1 línea si existe */}
+          {item.diagnosis_notes ? (
+            <Text
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={[
+                styles.diagnosisPreview,
+                {
+                  color: colors.mutedForeground,
+                  fontSize: fontSize.xs,
+                  marginTop: 6,
+                },
+              ]}
+            >
+              Diagnóstico: {item.diagnosis_notes}
+            </Text>
+          ) : null}
+
+          {/* Separador sutil */}
+          <View
+            style={[
+              styles.divider,
+              {
+                backgroundColor: colors.border,
+                marginVertical: spacing.sm,
+              },
+            ]}
+          />
+
+          {/* Fila de metadatos: Kilometraje, Tiempo y Chevron a la derecha */}
+          <View style={styles.cardFooter}>
+            <View style={styles.footerLeft}>
+              <View style={styles.metaItem}>
+                <Ionicons
+                  name="speedometer-outline"
+                  size={15}
+                  color={colors.mutedForeground}
+                  style={styles.metaIcon}
+                />
+                <Text
+                  style={[
+                    styles.metaText,
+                    { color: colors.mutedForeground, fontSize: fontSize.xs },
+                  ]}
+                >
+                  {mileageText}
+                </Text>
+              </View>
+
+              <View style={[styles.metaItem, { marginLeft: spacing.md }]}>
+                <Ionicons
+                  name="time-outline"
+                  size={15}
+                  color={timeColor}
+                  style={styles.metaIcon}
+                />
+                <Text
+                  style={[
+                    styles.metaText,
+                    {
+                      color: timeColor,
+                      fontSize: fontSize.xs,
+                      fontWeight: isOldReceived ? '700' : '500',
+                    },
+                  ]}
+                >
+                  {relativeTime}
+                </Text>
+              </View>
+            </View>
+
+            {/* Chevron-forward a la derecha */}
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={colors.mutedForeground}
+            />
           </View>
         </View>
-      </TouchableOpacity>
+      </Pressable>
     );
   };
 
@@ -230,8 +357,8 @@ export default function MecanicoOrdersScreen() {
               style={[
                 styles.skeletonBox,
                 {
-                  width: 80,
-                  height: 20,
+                  width: 90,
+                  height: 24,
                   backgroundColor: colors.muted,
                   borderRadius: radius.full,
                 },
@@ -243,7 +370,7 @@ export default function MecanicoOrdersScreen() {
               styles.skeletonBox,
               {
                 width: 180,
-                height: 18,
+                height: 16,
                 backgroundColor: colors.muted,
                 borderRadius: radius.sm,
                 marginTop: spacing.sm,
@@ -253,7 +380,10 @@ export default function MecanicoOrdersScreen() {
           <View
             style={[
               styles.divider,
-              { backgroundColor: colors.border, marginVertical: spacing.sm },
+              {
+                backgroundColor: colors.border,
+                marginVertical: spacing.sm,
+              },
             ]}
           />
           <View style={styles.cardFooter}>
@@ -261,7 +391,7 @@ export default function MecanicoOrdersScreen() {
               style={[
                 styles.skeletonBox,
                 {
-                  width: 90,
+                  width: 70,
                   height: 14,
                   backgroundColor: colors.muted,
                   borderRadius: radius.sm,
@@ -292,11 +422,20 @@ export default function MecanicoOrdersScreen() {
         { backgroundColor: colors.background, paddingHorizontal: spacing.md },
       ]}
     >
-      {/* Barra de chips de filtro */}
+      {/* Barra de chips de filtro con contadores */}
       <View style={[styles.chipsContainer, { marginVertical: spacing.md }]}>
-        {renderChip(WORK_ORDER_FILTERS.ACTIVAS, 'Activas')}
-        {renderChip(WORK_ORDER_FILTERS.TERMINADAS, 'Terminadas')}
-        {renderChip(WORK_ORDER_FILTERS.TODAS, 'Todas')}
+        {renderChip(
+          WORK_ORDER_FILTERS.ACTIVAS,
+          `Activas (${counts.activas})`
+        )}
+        {renderChip(
+          WORK_ORDER_FILTERS.TERMINADAS,
+          `Terminadas (${counts.terminadas})`
+        )}
+        {renderChip(
+          WORK_ORDER_FILTERS.TODAS,
+          `Todas (${counts.todas})`
+        )}
       </View>
 
       {/* Estado de error inicial con botón reintentar */}
@@ -337,7 +476,7 @@ export default function MecanicoOrdersScreen() {
           renderItem={renderOrderItem}
           contentContainerStyle={[
             styles.listContent,
-            { paddingBottom: 110 }, // Padding inferior para no tapar con la barra de tabs
+            { paddingBottom: 110 },
           ]}
           showsVerticalScrollIndicator={false}
           refreshControl={
@@ -352,17 +491,13 @@ export default function MecanicoOrdersScreen() {
             <EmptyState
               icon={
                 <Ionicons
-                  name="construct-outline"
+                  name="clipboard-outline"
                   size={56}
                   color={colors.mutedForeground}
                 />
               }
-              title="No tienes órdenes asignadas"
-              description={
-                selectedFilter === WORK_ORDER_FILTERS.ACTIVAS
-                  ? 'No hay órdenes activas pendientes de atención.'
-                  : 'No se encontraron órdenes para este filtro.'
-              }
+              title="No tienes órdenes en esta sección"
+              description="Cuando el taller te asigne una orden de trabajo, aparecerá listada aquí."
             />
           }
         />
@@ -380,40 +515,84 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   chip: {
-    minHeight: 40,
+    minHeight: 38,
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   chipText: {
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
   card: {
     borderWidth: 1,
+    position: 'relative',
+    overflow: 'hidden',
+    elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  statusStripe: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+  },
+  cardContent: {
+    paddingLeft: 18,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+  },
+  headerLeft: {
+    flex: 1,
+    marginRight: 8,
+  },
+  orderNumber: {
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 2,
   },
   plateText: {
-    fontWeight: '800',
-    letterSpacing: 1.2,
+    fontWeight: '900',
+    letterSpacing: 0.8,
+  },
+  filledBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filledBadgeText: {
+    color: '#ffffff',
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   vehicleText: {
     fontWeight: '600',
   },
+  customerText: {
+    fontWeight: '500',
+  },
+  diagnosisPreview: {
+    lineHeight: 16,
+  },
   divider: {
     height: 1,
+    width: '100%',
   },
   cardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  footerLeft: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
   metaItem: {

@@ -65,7 +65,7 @@ export default function EscanearProductoScreen() {
         pathname: '/(almacenero)/producto/nuevo',
         params: {
           scanData: JSON.stringify(res.data),
-          imageUri: photoUri,
+          imageUri: res.processedUri || photoUri,
         },
       });
     }

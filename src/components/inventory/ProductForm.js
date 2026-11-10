@@ -66,17 +66,21 @@ export default function ProductForm({
     const cost = parseFloat(costPrice.replace(',', '.'));
     const sale = parseFloat(salePrice.replace(',', '.'));
 
-    if (isNaN(cost) || isNaN(sale) || sale <= 0) {
-      return { valid: false, marginPct: null, isNegative: false };
+    if (isNaN(cost) || isNaN(sale) || sale <= 0 || cost < 0) {
+      return { valid: false, marginPct: null, isNegative: false, profit: '0.00', loss: '0.00' };
     }
 
     const margin = ((sale - cost) / sale) * 100;
     const isNegative = sale <= cost;
+    const profit = Math.max(sale - cost, 0);
+    const loss = Math.max(cost - sale, 0);
 
     return {
       valid: true,
       marginPct: margin.toFixed(1),
       isNegative,
+      profit: profit.toFixed(2),
+      loss: loss.toFixed(2),
       cost,
       sale,
     };
@@ -184,17 +188,17 @@ export default function ProductForm({
             {imageUri ? (
               <Image
                 source={{ uri: imageUri }}
-                style={[styles.thumbnail, { borderRadius: radius.sm }]}
+                style={[styles.thumbnail, { borderRadius: radius.md }]}
                 resizeMode="cover"
               />
             ) : (
               <View
                 style={[
                   styles.thumbnailPlaceholder,
-                  { backgroundColor: colors.muted, borderRadius: radius.sm },
+                  { backgroundColor: colors.muted, borderRadius: radius.md },
                 ]}
               >
-                <Ionicons name="sparkles" size={24} color={colors.primary} />
+                <Ionicons name="sparkles" size={28} color={colors.primary} />
               </View>
             )}
 
@@ -563,7 +567,7 @@ export default function ProductForm({
                   { color: colors.destructive, fontSize: fontSize.xs, marginLeft: 6 },
                 ]}
               >
-                El precio de venta debe ser mayor al costo (Margen: {marginCalculation.marginPct}%)
+                Pérdida de S/ {marginCalculation.loss} por unidad. El precio de venta debe ser mayor al costo.
               </Text>
             </View>
           ) : (
@@ -575,7 +579,7 @@ export default function ProductForm({
                   { color: colors.success, fontSize: fontSize.xs, marginLeft: 6 },
                 ]}
               >
-                Margen comercial: +{marginCalculation.marginPct}% de ganancia
+                Margen {marginCalculation.marginPct} % · Ganancia S/ {marginCalculation.profit} por unidad
               </Text>
             </View>
           )
@@ -793,12 +797,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   thumbnail: {
-    width: 60,
-    height: 60,
+    width: 72,
+    height: 72,
   },
   thumbnailPlaceholder: {
-    width: 60,
-    height: 60,
+    width: 72,
+    height: 72,
     justifyContent: 'center',
     alignItems: 'center',
   },

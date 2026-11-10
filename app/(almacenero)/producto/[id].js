@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   Modal,
   TextInput,
   KeyboardAvoidingView,
@@ -23,6 +22,7 @@ import Button from '../../../src/components/ui/Button';
 import Badge from '../../../src/components/ui/Badge';
 import ConfirmDialog from '../../../src/components/ui/ConfirmDialog';
 import SuccessDialog from '../../../src/components/ui/SuccessDialog';
+import ErrorDialog from '../../../src/components/ui/ErrorDialog';
 
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -46,6 +46,10 @@ export default function ProductDetailScreen() {
   // Estado para el SuccessDialog
   const [successVisible, setSuccessVisible] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+
+  // Estado para el ErrorDialog
+  const [errorDialogVisible, setErrorDialogVisible] = useState(false);
+  const [errorDialogMessage, setErrorDialogMessage] = useState('');
 
   const stock = Number(product?.stock ?? 0);
   const minStock = Number(product?.min_stock ?? 0);
@@ -113,10 +117,8 @@ export default function ProductDetailScreen() {
     setConfirmVisible(false);
 
     if (!res.success) {
-      Alert.alert(
-        'Error al registrar entrada',
-        res.error || 'No se pudo completar la operación.'
-      );
+      setErrorDialogMessage(res.error || 'No se pudo completar la operación.');
+      setErrorDialogVisible(true);
       return;
     }
 
@@ -761,6 +763,15 @@ export default function ProductDetailScreen() {
         message={successMessage}
         buttonText="Aceptar"
         onClose={() => setSuccessVisible(false)}
+      />
+
+      {/* ErrorDialog con diseño accesible */}
+      <ErrorDialog
+        visible={errorDialogVisible}
+        title="Error al registrar entrada"
+        message={errorDialogMessage}
+        buttonText="Entendido"
+        onClose={() => setErrorDialogVisible(false)}
       />
     </KeyboardAvoidingView>
   );

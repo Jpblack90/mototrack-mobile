@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -20,6 +19,8 @@ import Badge from '../../../src/components/ui/Badge';
 import Button from '../../../src/components/ui/Button';
 import Input from '../../../src/components/ui/Input';
 import ConfirmDialog from '../../../src/components/ui/ConfirmDialog';
+import SuccessDialog from '../../../src/components/ui/SuccessDialog';
+import ErrorDialog from '../../../src/components/ui/ErrorDialog';
 import { formatRelativeTime } from '../../../src/utils/dates';
 
 const TIMELINE_STEPS = [
@@ -54,6 +55,12 @@ export default function WorkOrderDetailScreen() {
 
   // Diálogo especial para aviso de aprobación requerida
   const [approvalNoticeVisible, setApprovalNoticeVisible] = useState(false);
+
+  // Estados para diálogos de éxito y error accesibles
+  const [successVisible, setSuccessVisible] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorDialogVisible, setErrorDialogVisible] = useState(false);
+  const [errorDialogMessage, setErrorDialogMessage] = useState('');
 
   const vehicleName =
     [order?.brand, order?.model].filter(Boolean).join(' ') ||
@@ -140,10 +147,8 @@ export default function WorkOrderDetailScreen() {
     setConfirmDialog((prev) => ({ ...prev, visible: false }));
 
     if (!res.success) {
-      Alert.alert(
-        'No se pudo actualizar el estado',
-        res.error || 'Ocurrió un error inesperado.'
-      );
+      setErrorDialogMessage(res.error || 'Ocurrió un error inesperado.');
+      setErrorDialogVisible(true);
       return;
     }
 
@@ -151,10 +156,8 @@ export default function WorkOrderDetailScreen() {
     if (res.data?.status === 'pendiente_aprobacion') {
       setApprovalNoticeVisible(true);
     } else {
-      Alert.alert(
-        'Estado actualizado',
-        `La orden #${order.id} se actualizó con éxito.`
-      );
+      setSuccessMessage(`La orden #${order.id} se actualizó con éxito.`);
+      setSuccessVisible(true);
     }
 
     await refresh();
@@ -845,6 +848,24 @@ export default function WorkOrderDetailScreen() {
         cancelText=""
         onCancel={() => setApprovalNoticeVisible(false)}
         onConfirm={() => setApprovalNoticeVisible(false)}
+      />
+
+      {/* Diálogo de éxito */}
+      <SuccessDialog
+        visible={successVisible}
+        title="Estado actualizado"
+        message={successMessage}
+        buttonText="Aceptar"
+        onClose={() => setSuccessVisible(false)}
+      />
+
+      {/* Diálogo de error */}
+      <ErrorDialog
+        visible={errorDialogVisible}
+        title="No se pudo actualizar el estado"
+        message={errorDialogMessage}
+        buttonText="Entendido"
+        onClose={() => setErrorDialogVisible(false)}
       />
     </KeyboardAvoidingView>
   );

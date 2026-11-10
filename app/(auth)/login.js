@@ -16,6 +16,7 @@ import { useTheme } from '../../src/theme';
 import { getStorageItem } from '../../src/utils/storage';
 import Input from '../../src/components/ui/Input';
 import Button from '../../src/components/ui/Button';
+import ServerConfigModal from '../../src/components/server/ServerConfigModal';
 
 export default function LoginScreen() {
   const { login } = useAuth();
@@ -27,6 +28,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isNetworkError, setIsNetworkError] = useState(false);
+  const [serverModalVisible, setServerModalVisible] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -81,6 +83,17 @@ export default function LoginScreen() {
       >
         {/* ── Franja Oscura Superior con Logo y Marca ── */}
         <View style={[styles.headerBanner, { backgroundColor: '#0d0d0d', paddingVertical: spacing.xl }]}>
+          {/* Botón de configuración de servidor */}
+          <TouchableOpacity
+            onPress={() => setServerModalVisible(true)}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            style={styles.gearButton}
+            accessibilityRole="button"
+            accessibilityLabel="Configurar servidor backend"
+          >
+            <Ionicons name="settings-outline" size={22} color="#e4e4e7" />
+          </TouchableOpacity>
+
           <Image
             source={require('../../assets/logo.png')}
             style={styles.logo}
@@ -184,6 +197,12 @@ export default function LoginScreen() {
           />
         </View>
       </ScrollView>
+
+      {/* Modal para configurar servidor dinámico */}
+      <ServerConfigModal
+        visible={serverModalVisible}
+        onClose={() => setServerModalVisible(false)}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -198,6 +217,17 @@ const styles = StyleSheet.create({
   headerBanner: {
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
+  },
+  gearButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
   },
   logo: {
     width: 220,

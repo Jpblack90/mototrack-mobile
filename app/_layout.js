@@ -9,6 +9,7 @@ import {
   DefaultTheme,
 } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import * as SystemUI from 'expo-system-ui';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { useTheme } from '../src/theme';
 
@@ -84,6 +85,12 @@ function AuthGate() {
  */
 function NavigationTheme({ children }) {
   const { colors, isDark } = useTheme();
+
+  // Fondo de la ventana nativa con el color del tema: sin esto Android muestra
+  // un destello blanco al volver atrás o durante las transiciones del Stack.
+  useEffect(() => {
+    SystemUI.setBackgroundColorAsync(colors.background).catch(() => {});
+  }, [colors.background]);
   const base = isDark ? DarkTheme : DefaultTheme;
   const navTheme = {
     ...base,

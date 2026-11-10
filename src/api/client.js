@@ -1,16 +1,13 @@
 /* eslint-disable import/no-named-as-default-member */
 import axios from 'axios';
 import { getStorageItem, deleteStorageItem } from '../utils/storage';
+import { getApiUrl } from '../config/server';
 
 export const TOKEN_KEY = 'mototrack_token';
 export const USER_KEY = 'mototrack_user';
 export const REMEMBER_EMAIL_KEY = 'mototrack_remember_email';
 
-export const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL || 'http://192.168.101.11:4000/api';
-
 const client = axios.create({
-  baseURL: API_BASE_URL,
   timeout: 10000, // Tiempo límite de 10 segundos según requisito
   headers: {
     'Content-Type': 'application/json',
@@ -24,16 +21,17 @@ export function setUnauthorizedHandler(callback) {
   onUnauthorizedCallback = callback;
 }
 
-// Interceptor de solicitud: inyecta Bearer token desde SecureStore (con fallback web)
+// Interceptor de solicitud: inyecta baseURL dinámico y Bearer token desde almacenamiento
 client.interceptors.request.use(
   async (config) => {
     try {
+      config.baseURL = await getApiUrl();
       const token = await getStorageItem(TOKEN_KEY);
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
     } catch (err) {
-      console.warn('Error leyendo token de almacenamiento:', err);
+      console.warn('Error en interceptor de solicitud:', err);
     }
     return config;
   },

@@ -1,18 +1,21 @@
 {
   "expo": {
-    "name": "mototrack-mobile",
-    "slug": "mototrack-mobile",
+    "name": "MotoTrack",
+    "slug": "mototrack",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mototrackmobile",
+    "scheme": "mototrack",
     "userInterfaceStyle": "automatic",
+    "backgroundColor": "#18181b",
     "ios": {
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "package": "pe.mototrack.app",
+      "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#0d0d0d",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -28,9 +31,14 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#0d0d0d",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 260,
+          "dark": {
+            "backgroundColor": "#0d0d0d",
+            "image": "./assets/images/splash-icon.png",
+            "imageWidth": 260
+          }
         }
       ],
       "expo-secure-store",
@@ -38,6 +46,14 @@
         "expo-image-picker",
         {
           "cameraPermission": "MotoTrack usa la cámara para identificar repuestos con IA."
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
         }
       ]
     ],

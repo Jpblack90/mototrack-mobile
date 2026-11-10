@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,8 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../theme';
 import { useCompany } from '../hooks/useCompany';
 import { useServerHealth } from '../hooks/useServerHealth';
-import { API_BASE_URL } from '../api/client';
+import { getApiUrl } from '../config/server';
+import ServerConfigModal from '../components/server/ServerConfigModal';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
@@ -31,6 +32,20 @@ export default function PerfilScreen() {
   const [passError, setPassError] = useState('');
   const [passSuccess, setPassSuccess] = useState('');
   const [passLoading, setPassLoading] = useState(false);
+
+  // Servidor dinámico
+  const [effectiveUrl, setEffectiveUrl] = useState('');
+  const [serverModalVisible, setServerModalVisible] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    getApiUrl().then((url) => {
+      if (isMounted) setEffectiveUrl(url);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const roleLabel =
     user?.role === 'mecanico'
@@ -144,7 +159,7 @@ export default function PerfilScreen() {
             URL Conectada:
           </Text>
           <Text style={[styles.valueMono, { color: colors.foreground, fontSize: fontSize.xs }]}>
-            {API_BASE_URL}
+            {effectiveUrl || 'Cargando...'}
           </Text>
         </View>
 
@@ -174,6 +189,14 @@ export default function PerfilScreen() {
           variant="outline"
           loading={healthLoading}
           style={{ marginTop: spacing.md }}
+        />
+
+        <Button
+          title="Cambiar servidor"
+          onPress={() => setServerModalVisible(true)}
+          variant="outline"
+          icon={<Ionicons name="settings-outline" size={18} color={colors.foreground} />}
+          style={{ marginTop: spacing.sm }}
         />
       </Card>
 
@@ -278,6 +301,16 @@ export default function PerfilScreen() {
           </View>
         </View>
       </Modal>
+      {/* Modal: Configuración de servidor */}
+      <ServerConfigModal
+        visible={serverModalVisible}
+        onClose={() => setServerModalVisible(false)}
+        onSaved={async (newUrl) => {
+          setEffectiveUrl(newUrl);
+          // Si se cambia el servidor con sesión iniciada, cierra la sesión (el token es de otro servidor)
+          await logout();
+        }}
+      />
     </ScrollView>
   );
 }

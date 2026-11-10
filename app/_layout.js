@@ -54,9 +54,9 @@ function AuthGate() {
     // Usuario autorizado: redirigir a su interfaz de rol si se encuentra en auth o raíz
     if (inAuthGroup || segments.length === 0) {
       if (user.role === 'mecanico') {
-        router.replace('/(mecanico)');
+        router.replace('/(mecanico)/(tabs)');
       } else if (user.role === 'almacenero') {
-        router.replace('/(almacenero)');
+        router.replace('/(almacenero)/(tabs)');
       }
     }
   }, [user, loading, isAuthenticated, segments, router]);

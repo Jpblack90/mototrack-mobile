@@ -9,14 +9,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useTheme } from '../../src/theme';
+import { useTheme } from '../../../src/theme';
 import useMyWorkOrders, {
   WORK_ORDER_FILTERS,
-} from '../../src/hooks/useMyWorkOrders';
-import Badge from '../../src/components/ui/Badge';
-import Button from '../../src/components/ui/Button';
-import EmptyState from '../../src/components/ui/EmptyState';
-import { formatRelativeTime } from '../../src/utils/dates';
+} from '../../../src/hooks/useMyWorkOrders';
+import Badge from '../../../src/components/ui/Badge';
+import Button from '../../../src/components/ui/Button';
+import EmptyState from '../../../src/components/ui/EmptyState';
+import { formatRelativeTime } from '../../../src/utils/dates';
 
 const STATUS_CONFIG = {
   recibido: { label: 'Recibido', variant: 'outline' },
@@ -93,7 +93,12 @@ export default function MecanicoOrdersScreen() {
 
     return (
       <TouchableOpacity
-        onPress={() => router.push(`/(mecanico)/orden/${item.id}`)}
+        onPress={() =>
+          router.push({
+            pathname: '/(mecanico)/orden/[id]',
+            params: { id: String(item.id) },
+          })
+        }
         activeOpacity={0.7}
         accessibilityRole="button"
         accessibilityLabel={`Orden ${item.id}, placa ${item.placa}`}

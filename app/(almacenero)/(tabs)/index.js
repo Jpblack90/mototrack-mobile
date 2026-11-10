@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../src/context/AuthContext';
-import { useTheme } from '../../src/theme';
-import EmptyState from '../../src/components/ui/EmptyState';
-import Badge from '../../src/components/ui/Badge';
+import { useAuth } from '../../../src/context/AuthContext';
+import { useTheme } from '../../../src/theme';
+import EmptyState from '../../../src/components/ui/EmptyState';
+import Badge from '../../../src/components/ui/Badge';
 
 export default function AlmaceneroInventoryScreen() {
   const { user } = useAuth();

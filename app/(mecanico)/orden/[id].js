@@ -238,7 +238,9 @@ export default function WorkOrderDetailScreen() {
         ]}
       >
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() =>
+            router.canGoBack() ? router.back() : router.replace('/(mecanico)/(tabs)')
+          }
           accessibilityRole="button"
           accessibilityLabel="Volver a mis órdenes"
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}

@@ -1,47 +1,25 @@
 import React from 'react';
-import { View } from 'react-native';
-import { Tabs } from 'expo-router';
-import TabBarIcon from '../../src/components/navigation/TabBarIcon';
-import useTabScreenOptions from '../../src/components/navigation/useTabScreenOptions';
+import { Stack } from 'expo-router';
 import { useTheme } from '../../src/theme';
 
+/**
+ * Pila de navegación del rol: las pestañas viven en (tabs)/ y las pantallas
+ * de detalle (p. ej. orden/[id]) se abren encima, sin barra de pestañas.
+ */
 export const unstable_settings = {
-  anchor: 'index',
+  initialRouteName: '(tabs)',
 };
 
-export default function AlmaceneroLayout() {
-  const screenOptions = useTabScreenOptions();
+export default function AlmaceneroStackLayout() {
   const { colors } = useTheme();
 
-  // Fondo del tema detrás de las esquinas redondeadas de la barra
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <Tabs backBehavior="initialRoute" screenOptions={screenOptions}>
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: 'Inventario',
-            tabBarLabel: 'Inventario',
-            tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon name="cube" color={color} focused={focused} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="perfil"
-          options={{
-            title: 'Perfil',
-            tabBarLabel: 'Perfil',
-            tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon
-                name="person-circle"
-                color={color}
-                focused={focused}
-              />
-            ),
-          }}
-        />
-      </Tabs>
-    </View>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: 'slide_from_right',
+        contentStyle: { backgroundColor: colors.background },
+      }}
+    />
   );
 }

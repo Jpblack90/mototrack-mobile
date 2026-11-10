@@ -1,56 +1,91 @@
-# Welcome to your Expo app 👋
+# MotoTrack Mobile — App Android para Mecánicos y Almaceneros
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicación móvil complementaria para el personal operativo del taller (roles **mecánico** y **almacenero**), desarrollada con **React Native**, **Expo SDK 58** y **Expo Router**.
 
-## Get started
+---
 
-1. Install dependencies
+## 1. Requisitos Previos
 
+- **Node.js**: v24.15.0 o superior.
+- **Dispositivo Móvil**: Teléfono Android con la aplicación **Expo Go** instalada (versión de cliente compatible con Expo SDK 58, ej. 58.0.5).
+- **Red Local**: La computadora donde se ejecuta el backend y el celular deben estar conectados a la **misma red Wi-Fi o router**.
+
+---
+
+## 2. Configuración de Red y Variables de Entorno
+
+La aplicación consume la API REST del backend de MotoTrack AI mediante la variable de entorno `EXPO_PUBLIC_API_URL`.
+
+### Paso 1: Identificar la IP local de tu PC
+Abre PowerShell o CMD en Windows y ejecuta:
+```bash
+ipconfig
+```
+Localiza la dirección IPv4 de tu adaptador de red principal (Ethernet o Wi-Fi), por ejemplo: `192.168.101.11`.
+
+### Paso 2: Configurar `.env`
+Crea o edita el archivo `.env` en la raíz de `mototrack-mobile/`:
+```env
+EXPO_PUBLIC_API_URL=http://192.168.101.11:4000/api
+```
+*(Reemplaza `192.168.101.11` por la IP actual de tu computadora si difiere).*
+
+> [!IMPORTANT]
+> **Cambio de IP por el Router**: Si el router asigna una nueva IP dinámica a tu computadora por DHCP, debes actualizar `EXPO_PUBLIC_API_URL` en `.env` y reiniciar el servidor de desarrollo limpiando la caché con:
+> ```bash
+> npx expo start -c
+> ```
+
+---
+
+## 3. Configuración del Firewall de Windows
+
+Para permitir que el celular se comunique con el backend en el puerto **4000** y con el servidor de desarrollo de Expo en el puerto **8081**:
+
+1. Abre **PowerShell como Administrador**.
+2. Ejecuta las siguientes reglas de firewall (perfil Privado):
+```powershell
+New-NetFirewallRule -DisplayName "MotoTrack Backend 4000" -Direction Inbound -LocalPort 4000 -Protocol TCP -Action Allow -Profile Private
+New-NetFirewallRule -DisplayName "Expo Metro 8081" -Direction Inbound -LocalPort 8081 -Protocol TCP -Action Allow -Profile Private
+```
+
+---
+
+## 4. Instalación y Puesta en Marcha
+
+1. **Instalar dependencias:**
    ```bash
+   cd mototrack-mobile
    npm install
    ```
 
-2. Start the app
-
+2. **Iniciar el servidor de desarrollo:**
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+3. **Abrir en tu teléfono:**
+   - Abre la app **Expo Go** en tu dispositivo Android.
+   - Selecciona **Scan QR code** y escanea el código QR mostrado en la terminal de la computadora.
+   - La aplicación se descargará y ejecutará en tiempo real en tu teléfono.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## 5. Cuentas de Acceso (Usuarios de Prueba)
 
-## Get a fresh project
+Para probar la aplicación con datos presembrados de empresas `[PRUEBA]`:
 
-When you're ready, run:
+| Rol | Correo | Contraseña | Comportamiento en la App |
+| :--- | :--- | :--- | :--- |
+| **Mecánico** | `pruebameca@mototrack.local` | `Demo1234!` | Acceso a tabs "Mis órdenes" y "Perfil" |
+| **Almacenero** | `pruebaalmacen@mototrack.local` | `Demo1234!` | Acceso a tabs "Inventario" y "Perfil" |
+| **Cajero** | `pruebacajero@mototrack.local` | `Demo1234!` | Pantalla de bloqueo: *"Esta app es para mecánicos y almaceneros. Usa la versión web."* |
 
+---
+
+## 6. Verificación de Calidad
+
+Para ejecutar las comprobaciones de linting de Expo:
 ```bash
-npm run reset-project
+npx expo lint
 ```
-
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
-
-### Other setup steps
-
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.

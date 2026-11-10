@@ -28,6 +28,13 @@ export default function MecanicoLayout() {
           }}
         />
         <Tabs.Screen
+          name="orden/[id]"
+          options={{
+            href: null,
+            headerShown: false,
+          }}
+        />
+        <Tabs.Screen
           name="perfil"
           options={{
             title: 'Perfil',
